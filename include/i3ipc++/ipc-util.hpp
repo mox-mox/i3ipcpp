@@ -141,10 +141,22 @@ void   i3_send(const int32_t  sockfd, const buf_t&  buff);
 
 /**
  * @brief Recive a message from i3
+ *
+ * Call this function, when there is data available to be read from the i3 socket.
  * @param  sockfd  a socket
  * @return  a buffer of the message
  */
 std::shared_ptr<buf_t>   i3_recv(const int32_t  sockfd);
+
+/**
+ * @brief Hand message data from i3
+ *
+ * Call this function with data read from the i3 socket. Data will be stored across calls until it constitutes a complete message.
+ * If the inserted data forms a message, a buffer of it will be retured.
+ * @param  sockfd  a socket
+ * @return  a buffer of the message (or nullptr) and number of bytes consumed
+ */
+std::tuple<std::shared_ptr<buf_t>, std::size_t> i3_handle_data(const uint8_t data[], const std::size_t data_size);
 
 /**
  * @brief Pack a buffer of message

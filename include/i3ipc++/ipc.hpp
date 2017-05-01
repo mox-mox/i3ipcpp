@@ -322,9 +322,20 @@ public:
 
 	/**
 	 * Handle an event from i3
+	 *
+	 * Call this function to wait until there is data available on the i3 socket.
 	 * @note Used only in main()
 	 */
 	void  handle_event();
+
+	/**
+	 * Handle event data from i3
+	 *
+	 * Call this function, if you already have event data from the i3 socket.
+	 * Data will be stored internally until a complete event was entered in which case the appropriate event callbacks will be called.
+	 * @note Used only in main()
+	 */
+	void  handle_event(uint8_t data[], std::size_t data_size);
 
 	/**
 	 * Get the fd of the main socket

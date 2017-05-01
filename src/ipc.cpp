@@ -430,6 +430,23 @@ void  connection::handle_event() {
 }
 
 
+void connection::handle_event(uint8_t data[], std::size_t data_size) {
+	std::shared_ptr<buf_t> buf;
+	std::size_t consumed;
+
+	while(data_size) {
+		std::tie(buf, consumed) = i3_handle_data(data, data_size);
+		data+=consumed;
+		data_size -= consumed;
+
+		if(buf != nullptr)
+		{
+			this->signal_event.emit(static_cast<EventType>(1 << (buf->header->type & 0x7f)), std::static_pointer_cast<const buf_t>(buf));
+		}
+	}
+}
+
+
 bool  connection::subscribe(const int32_t  events) {
 #define i3IPC_TYPE_STR "SUBSCRIBE"
 	if (m_event_socket <= 0) {

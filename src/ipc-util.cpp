@@ -159,6 +159,55 @@ std::shared_ptr<buf_t>   i3_recv(const int32_t  sockfd) {
 }
 
 
+std::tuple<std::shared_ptr<buf_t>, std::size_t> i3_handle_data(const uint8_t data[], const std::size_t data_size) {
+	static const std::size_t header_size = sizeof(header_t);
+
+	static buf_t*  buff = nullptr;
+	static std::size_t buff_idx = 0;
+	std::size_t data_idx = 0;
+
+	if(!buff) buff = new buf_t(0);
+
+	if(buff_idx < header_size-1)
+	{
+		std::size_t copy_count = std::min(
+				header_size-buff_idx,
+				data_size-data_idx // data_idx is 0 here, but kept for consistency
+				);
+
+		memcpy(reinterpret_cast<uint8_t*>(buff->header)+buff_idx, data+data_idx, copy_count);
+		buff_idx += copy_count;
+		data_idx += copy_count;
+
+		if (g_i3_ipc_magic != std::string(buff->header->magic, g_i3_ipc_magic.length())) {
+			throw invalid_header_error("Invalid magic in reply");
+		}
+		buff->realloc_payload_to_header();
+	}
+	{
+		std::size_t payload_idx = buff_idx - header_size;
+		std::size_t copy_count = std::min(
+				buff->header->size + payload_idx,
+				data_size-data_idx
+				);
+		memcpy(reinterpret_cast<uint8_t*>(buff->payload)+payload_idx, data+data_idx, copy_count);
+		buff_idx += copy_count;
+		data_idx += copy_count;
+	}
+	if(buff_idx == header_size + buff->header->size) // If buffer is filled return it ...
+	{
+		std::shared_ptr<buf_t> completed_buffer(buff);
+		buff = nullptr;
+		buff_idx = 0;
+		return std::make_tuple(completed_buffer, data_idx);
+	}
+	else // ... else return nothing but the number of consumed bytes
+	{
+		return std::make_tuple(std::shared_ptr<buf_t>(nullptr), data_idx);
+	}
+}
+
+
 std::shared_ptr<buf_t>  i3_msg(const int32_t  sockfd, const ClientMessageType  type, const std::string&  payload) {
 	auto  send_buff = i3_pack(type, payload);
 	i3_send(sockfd, *send_buff);

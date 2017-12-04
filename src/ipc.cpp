@@ -431,6 +431,7 @@ void  connection::handle_event() {
 
 
 void connection::handle_event(uint8_t data[], std::size_t data_size) {
+	//TODO: Handle incomplete data
 	std::shared_ptr<buf_t> buf;
 	std::size_t consumed;
 
